@@ -1,62 +1,41 @@
 export default async function handler(req, res) {
 
-const { url } = req.query;
+  const { url } = req.query;
 
-if(!url){
-return res.status(400).json({
-success:false,
-message:"Instagram URL required"
-});
-}
+  if (!url) {
+    return res.status(400).json({
+      success: false,
+      message: "Instagram URL required"
+    });
+  }
 
-try{
+  try {
 
-const response = await fetch(url,{
-headers:{
-"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-}
-});
+    const api = `https://api.instagram.com/oembed/?url=${encodeURIComponent(url)}`;
 
-const html = await response.text();
+    const response = await fetch(api, {
+      headers: {
+        "user-agent": "Mozilla/5.0"
+      }
+    });
 
-let videoMatch = html.match(/"video_url":"([^"]+)"/);
-let imageMatch = html.match(/"display_url":"([^"]+)"/);
+    const data = await response.json();
 
-let download = null;
+    res.status(200).json({
+      success: true,
+      title: data.title,
+      author: data.author_name,
+      thumbnail: data.thumbnail_url,
+      html: data.html
+    });
 
-if(videoMatch){
-download = videoMatch[1].replace(/\\u0026/g,"&");
-}
+  } catch (error) {
 
-if(!download && imageMatch){
-download = imageMatch[1].replace(/\\u0026/g,"&");
-}
+    res.status(500).json({
+      success: false,
+      error: error.toString()
+    });
 
-/* fallback extractor */
-
-if(!download){
-
-let alt = html.match(/"contentUrl":"([^"]+)"/);
-
-if(alt){
-download = alt[1].replace(/\\u0026/g,"&");
-}
-
-}
-
-res.status(200).json({
-success:true,
-url:url,
-download:download
-});
-
-}catch(error){
-
-res.status(500).json({
-success:false,
-error:error.toString()
-});
-
-}
+  }
 
 }
