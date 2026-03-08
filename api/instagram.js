@@ -13,7 +13,7 @@ try{
 
 const response = await fetch(url,{
 headers:{
-"user-agent":"Mozilla/5.0"
+"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 }
 });
 
@@ -30,6 +30,18 @@ download = videoMatch[1].replace(/\\u0026/g,"&");
 
 if(!download && imageMatch){
 download = imageMatch[1].replace(/\\u0026/g,"&");
+}
+
+/* fallback extractor */
+
+if(!download){
+
+let alt = html.match(/"contentUrl":"([^"]+)"/);
+
+if(alt){
+download = alt[1].replace(/\\u0026/g,"&");
+}
+
 }
 
 res.status(200).json({
