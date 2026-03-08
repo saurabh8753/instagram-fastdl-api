@@ -1,7 +1,4 @@
-import fetch from "node-fetch";
-import cheerio from "cheerio";
-
-export default async function handler(req, res){
+export default async function handler(req, res) {
 
 const { url } = req.query;
 
@@ -22,44 +19,30 @@ headers:{
 
 const html = await response.text();
 
-const $ = cheerio.load(html);
+let videoMatch = html.match(/"video_url":"([^"]+)"/);
+let imageMatch = html.match(/"display_url":"([^"]+)"/);
 
-let video = $('meta[property="og:video"]').attr("content");
-let image = $('meta[property="og:image"]').attr("content");
+let download = null;
 
-let media = [];
-
-if(video){
-media.push({
-type:"video",
-url:video
-});
+if(videoMatch){
+download = videoMatch[1].replace(/\\u0026/g,"&");
 }
 
-if(image){
-media.push({
-type:"image",
-url:image
-});
+if(!download && imageMatch){
+download = imageMatch[1].replace(/\\u0026/g,"&");
 }
-
-let type="post";
-
-if(url.includes("/reel/")) type="reel";
-if(url.includes("/stories/")) type="story";
 
 res.status(200).json({
 success:true,
-type:type,
-thumbnail:image,
-media:media
+url:url,
+download:download
 });
 
-}catch(err){
+}catch(error){
 
 res.status(500).json({
 success:false,
-error:err.message
+error:error.toString()
 });
 
 }
